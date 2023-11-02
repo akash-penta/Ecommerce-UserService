@@ -7,6 +7,8 @@ import com.akash.userservice.models.SessionStatus;
 import com.akash.userservice.models.User;
 import com.akash.userservice.repositories.SessionRepository;
 import com.akash.userservice.repositories.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +16,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.UUID;
+import javax.crypto.SecretKey;
+import java.time.LocalDate;
+import java.util.*;
 
 @Service
 public class AuthServiceImpl implements AuthService{
@@ -67,7 +68,18 @@ public class AuthServiceImpl implements AuthService{
             throw new IncorrectUserDetailsException("Unable to login, Incorrect user details");
         }
 
-        String token = user.getEmail() + new Date();
+        MacAlgorithm alg = Jwts.SIG.HS256; //or HS384 or HS256
+        SecretKey key = alg.key().build();
+        Map<String, Object> jsonForJwt = new HashMap<>();
+        jsonForJwt.put("id", user.getId());
+        jsonForJwt.put("email", user.getEmail());
+        jsonForJwt.put("roles", user.getRoles());
+        jsonForJwt.put("createdAt", new Date());
+        jsonForJwt.put("expireAt", new Date(new Date().getTime() + 2*24*60*60*1000));
+        String token = Jwts.builder()
+                            .claims(jsonForJwt)
+                            .signWith(key)
+                            .compact();
 
         Session session = new Session();
         session.setToken(token);
@@ -78,7 +90,7 @@ public class AuthServiceImpl implements AuthService{
         UserResponseDto responseDto = UserResponseDto.from(user);
 
         MultiValueMapAdapter<String, String> headers = new MultiValueMapAdapter<>(new HashMap<>());
-        headers.add(HttpHeaders.SET_COOKIE, "auth-token" + token);
+        headers.add(HttpHeaders.SET_COOKIE, "auth-token:" + token);
         headers.add(HttpHeaders.SET_COOKIE2, user.getId().toString());
 
         return new ResponseEntity<>(responseDto, headers, HttpStatus.OK);
