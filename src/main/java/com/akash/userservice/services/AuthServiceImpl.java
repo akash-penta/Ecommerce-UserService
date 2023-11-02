@@ -10,6 +10,7 @@ import com.akash.userservice.repositories.UserRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMapAdapter;
 
@@ -23,13 +24,16 @@ public class AuthServiceImpl implements AuthService{
 
     private final UserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public AuthServiceImpl(
             UserRepository userRepository,
-            SessionRepository sessionRepository
+            SessionRepository sessionRepository,
+            BCryptPasswordEncoder bCryptPasswordEncoder
     ) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
     @Override
@@ -43,7 +47,7 @@ public class AuthServiceImpl implements AuthService{
         } else {
             user = optionalUser.get();
         }
-        user.setPassword(password);
+        user.setPassword(bCryptPasswordEncoder.encode(password));
 
         User savedUser = userRepository.save(user);
 
@@ -59,7 +63,7 @@ public class AuthServiceImpl implements AuthService{
 
         User user = optionalUser.get();
 
-        if(!user.getPassword().equals(password)) {
+        if(!bCryptPasswordEncoder.matches(password, user.getPassword())) {
             throw new IncorrectUserDetailsException("Unable to login, Incorrect user details");
         }
 
