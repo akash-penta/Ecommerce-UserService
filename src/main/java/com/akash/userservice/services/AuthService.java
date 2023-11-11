@@ -1,5 +1,6 @@
 package com.akash.userservice.services;
 
+import com.akash.userservice.dtos.TokenResponseDto;
 import com.akash.userservice.dtos.UserResponseDto;
 import com.akash.userservice.exceptions.IncorrectUserDetailsException;
 import com.akash.userservice.models.SessionStatus;
@@ -11,7 +12,7 @@ public interface AuthService {
     UserResponseDto signUp(String email, String password);
     ResponseEntity<UserResponseDto> logIn(String email, String password) throws IncorrectUserDetailsException;
 
-    ResponseEntity<Void> logOut(String token, UUID id);
+    ResponseEntity<Void> logOut(String token);
 
-    ResponseEntity<SessionStatus> validateToken(String token, UUID id);
+    ResponseEntity<TokenResponseDto> validateToken(String token);
 }

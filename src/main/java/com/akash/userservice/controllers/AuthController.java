@@ -1,19 +1,15 @@
 package com.akash.userservice.controllers;
 
-import com.akash.userservice.dtos.TokenRequestDto;
+import com.akash.userservice.dtos.TokenResponseDto;
 import com.akash.userservice.dtos.UserRequestDto;
 import com.akash.userservice.dtos.UserResponseDto;
 import com.akash.userservice.exceptions.IncorrectUserDetailsException;
-import com.akash.userservice.models.SessionStatus;
 import com.akash.userservice.services.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -38,12 +34,15 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logOut(@RequestBody TokenRequestDto tokenRequestDto) {
-        return authService.logOut(tokenRequestDto.getToken(), UUID.fromString(tokenRequestDto.getId()));
+    public ResponseEntity<Void> logOut(@RequestHeader Map<String, String> headers) {
+        String token = headers.get("set-cookie").split(":")[1];
+        return authService.logOut(token);
     }
 
     @PostMapping("/validate")
-    public ResponseEntity<SessionStatus> validateToken(@RequestBody TokenRequestDto tokenRequestDto) {
-        return authService.validateToken(tokenRequestDto.getToken(), UUID.fromString(tokenRequestDto.getId()));
+    public ResponseEntity<TokenResponseDto> validateToken(@RequestHeader Map<String, String> headers) {
+        System.out.println(headers);
+        String token = headers.get("set-cookie").split(":")[1];
+        return authService.validateToken(token);
     }
 }
